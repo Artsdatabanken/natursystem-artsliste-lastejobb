@@ -2,7 +2,9 @@ const { log, io } = require("lastejobb");
 const path = require("path");
 var xlsx = require("node-xlsx");
 
-const inputFiles = io.findFiles("data", ".xlsx");
+let inputFiles = io.findFiles("data/natursystem-artsliste-ubehandlet", ".xlsx");
+inputFiles = inputFiles.reverse();
+
 for (let inputFile of inputFiles) convertToJson(inputFile);
 
 function convertToJson(fn) {
@@ -11,8 +13,15 @@ function convertToJson(fn) {
   log.info("Processing sheet " + sheet.name);
   var r = [];
   const rows = sheet["data"];
-  const header = rows[1];
-  for (var j = 2; j < rows.length; j++) {
+  let header = null;
+  let j = 0;
+  for (; j < rows.length; j++) {
+    header = rows[j];
+    if (header.join(",").indexOf("Autor") >= 0) break;
+  }
+  if (!header) throw new Error("Fant ikke overskriftsrad");
+  j++;
+  for (; j < rows.length; j++) {
     const e = {};
     const row = rows[j];
     for (let col = 0; col < header.length; col++)
@@ -20,7 +29,6 @@ function convertToJson(fn) {
 
     r.push(e);
   }
-  log.info("Imported " + r.length + " rows.");
   io.skrivDatafil(path.parse(fn).name, r);
 }
 
@@ -29,6 +37,7 @@ function getArtslisteSheet(fn) {
   for (var i = 0; i < sheets.length; i++) {
     const sheet = sheets[i];
     log.info("Sheet: " + sheet.name);
+    if (sheet.name === "Artsdata") return sheet;
     if (sheet.name === "Artslister") return sheet;
     if (sheet.name === "ArtsdataGlatta") return sheet;
   }
