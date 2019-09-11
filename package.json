@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lastejobb": "^1.24.3",
-    "node-xlsx": "^0.15.0"
+    "js-xlsx": "^0.8.22",
+    "lastejobb": "^1.24.3"
   }
 }
