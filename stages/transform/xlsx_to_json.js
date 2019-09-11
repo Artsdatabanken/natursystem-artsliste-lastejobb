@@ -1,6 +1,6 @@
 const { log, io } = require("lastejobb");
 const path = require("path");
-var xlsx = require("node-xlsx");
+var XLSX = require("js-xlsx");
 
 let inputFiles = io.findFiles("data/natursystem-artsliste-ubehandlet", ".xlsx");
 inputFiles = inputFiles.reverse();
@@ -11,17 +11,10 @@ function convertToJson(fn) {
   log.info("Reading " + fn + "...");
   const sheet = getArtslisteSheet(fn);
   log.info("Processing sheet " + sheet.name);
+  const rows = XLSX.utils.sheet_to_row_object_array(sheet, { header: 1 });
+  const { header, headerRowCount } = readHeader(rows);
   var r = [];
-  const rows = sheet["data"];
-  let header = null;
-  let j = 0;
-  for (; j < rows.length; j++) {
-    header = rows[j];
-    if (header.join(",").indexOf("Autor") >= 0) break;
-  }
-  if (!header) throw new Error("Fant ikke overskriftsrad");
-  j++;
-  for (; j < rows.length; j++) {
+  for (let j = headerRowCount; j < rows.length; j++) {
     const e = {};
     const row = rows[j];
     for (let col = 0; col < header.length; col++)
@@ -32,14 +25,28 @@ function convertToJson(fn) {
   io.skrivDatafil(path.parse(fn).name, r);
 }
 
-function getArtslisteSheet(fn) {
-  var sheets = xlsx.parse(fn);
-  for (var i = 0; i < sheets.length; i++) {
-    const sheet = sheets[i];
-    log.info("Sheet: " + sheet.name);
-    if (sheet.name === "Artsdata") return sheet;
-    if (sheet.name === "Artslister") return sheet;
-    if (sheet.name === "ArtsdataGlatta") return sheet;
+function readHeader(rows) {
+  let header = [];
+  let j = 0;
+  for (; j < 20; j++) {
+    const row = rows[j];
+    for (let k = 0; k < row.length; k++) {
+      if (!row[k]) continue;
+      if (header[k]) header[k] += "_";
+      header[k] = (header[k] || "") + row[k];
+    }
+    if (row.join(",").indexOf("Autor") >= 0)
+      return { header, headerRowCount: j + 1 };
   }
+  throw new Error("Fant ikke overskriftsrad.");
+}
+
+function getArtslisteSheet(fn) {
+  var workbook = XLSX.readFile(fn);
+  var sheets = workbook.Sheets;
+  if (sheets.Artsdata) return sheets.Artsdata;
+  if (sheets.ArtsData) return sheets.ArtsData;
+  if (sheets.Artslister) return sheets.Artslister;
+  if (sheets.ArtsdataGlatta) return sheets.ArtsdataGlatta;
   throw new Error("Finner ikke ark artsliste i " + fn);
 }
