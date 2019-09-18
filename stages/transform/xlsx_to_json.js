@@ -10,7 +10,7 @@ for (let inputFile of inputFiles) convertToJson(inputFile);
 function convertToJson(fn) {
   log.info("Reading " + fn + "...");
   const sheet = getArtslisteSheet(fn);
-  log.info("Processing sheet " + sheet.name);
+  log.info("Behandler artslisten...");
   const rows = XLSX.utils.sheet_to_row_object_array(sheet, { header: 1 });
   const { header, headerRowCount } = readHeader(rows);
   var r = [];
@@ -48,5 +48,5 @@ function getArtslisteSheet(fn) {
   if (sheets.ArtsData) return sheets.ArtsData;
   if (sheets.Artslister) return sheets.Artslister;
   if (sheets.ArtsdataGlatta) return sheets.ArtsdataGlatta;
-  throw new Error("Finner ikke ark artsliste i " + fn);
+  throw new Error("Finner ikke ark med artsliste i " + fn);
 }
